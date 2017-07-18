@@ -391,3 +391,127 @@ def delete_groups(request):
         uKey = request.POST.get('uKey','')
         User.objects.filter(uKey=uKey).delete()
     return HttpResponseRedirect(reverse('users'))
+
+@login_required
+def device(request,args=None):
+    user = request.user
+    state=None
+    if args:
+        print(args)
+        state = args['state']
+    content = {
+        'active_menu' : 'Users',
+        'user' : user,
+        'state': state,
+    }
+    return render(request,'dashboard/users/index.html',content)
+
+@login_required
+def get_device(request):
+    '''
+    get application lists
+    :param request:
+    :return:
+    '''
+    user = request.user
+    if request.method == "GET":
+        limit = request.GET.get('limit')   # how many items per page
+        offset = request.GET.get('offset')  # how many items in total in the DB
+        search = request.GET.get('search')
+        sort_column = request.GET.get('sort')   # which column need to sort
+        order = request.GET.get('order')      # ascending or descending
+        if search:    #    判断是否有搜索字
+            all_records = User.objects.filter(id=search,asset_type=search,business_unit=search)
+        else:
+            all_records = User.objects.filter(account= user)  # must be wirte the line code here
+
+        if sort_column:   # 判断是否有排序需求
+            sort_column = sort_column.replace('asset_', '')
+            if sort_column in ['user_name','name','email','status','last_login']:   # 如果排序的列表在这些内容里面
+                if order == 'desc':   # 如果排序是反向
+                    sort_column = '-%s' % (sort_column)
+                all_records = User.objects.filter(account= user).order_by(sort_column)
+
+        all_records_count=all_records.count()
+
+        if not offset:
+            offset = 0
+        if not limit:
+            limit = 20    # 默认是每页20行的内容，与前端默认行数一致
+        pageinator = Paginator(all_records, limit)   # 开始做分页
+
+        page = int(int(offset) / int(limit) + 1)
+        response_data = {'total':all_records_count,'rows':[]}   # 必须带有rows和total这2个key，total表示总页数，rows表示每行的内容
+
+
+        for asset in pageinator.page(page):
+            response_data['rows'].append({
+                "asset_user_name": '<a href="/dashboard/users/detail/?uKey=%s">%s</a>' %(asset.uKey,asset.user_name),
+                "asset_name": asset.user_real_name if asset.user_real_name else "",
+                "asset_email": asset.user_email if asset.user_email else "",
+                "asset_status": asset.user_status if asset.user_status else "",
+                "asset_last_login": asset.last_login if asset.last_login else "未激活",
+            })
+        return  HttpResponse(json.dumps(response_data))    # 需要json处理下数据格式
+
+@login_required
+def add_device(request):
+    user = request.user
+    state = None
+    if request.method == 'POST':
+        user_name = request.POST.get('user_name')
+        account = Account.objects.get(api_hostname= user.api_hostname)
+        account_user = User.objects.filter(account= account)
+        qs = account_user.filter(user_name__iexact=user_name)
+        if qs.exists():
+            content = {
+                'duplicate_name': '您所填写的用户名已被其它用户使用.',
+                'state': 'error',
+            }
+            return render(request,'dashboard/users/add.html',content)
+        new_user = User(
+            uKey = User.new_user_key()['uKey'],
+            user_name = request.POST.get('user_name'),
+            account = Account.get_account(user.api_hostname),
+        )
+        new_user.save()
+        return HttpResponseRedirect("/dashboard/users/detail/?uKey=%s"%(new_user.uKey))
+    print(123)
+    content = {
+        'active_menu' : 'add_users',
+        'user' : user,
+        'state': state,
+
+    }
+    return render(request,'dashboard/users/add.html',content)
+
+@login_required
+def device_detail(request):
+    '''
+    show application detail
+    :param request:
+    :return:
+    '''
+    user = request.user
+    uKey = request.GET.get('uKey','')
+    if uKey == '':
+        return HttpResponseRedirect(reverse('users'))
+    try:
+        users = User.objects.get(uKey= uKey)
+        print(users.uKey)
+    except Application.DoesNotExist:
+        return HttpResponseRedirect(reverse('users'))
+    content = {
+        'active_menu' : 'Users',
+        'user' : user,
+        'users' :users,
+    }
+    return render(request,'dashboard/users/users_detail.html',content)
+
+@login_required
+def delete_device(request):
+    user = request.user
+    if request.method == 'POST':
+        uKey = request.POST.get('uKey','')
+        User.objects.filter(uKey=uKey).delete()
+    return HttpResponseRedirect(reverse('users'))
