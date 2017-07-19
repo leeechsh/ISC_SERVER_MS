@@ -19,46 +19,35 @@
                 <div class="gray-bg">
                     <div class="row wrapper border-bottom white-bg page-heading  fadeInUp">
                         <div class="col-sm-4">
-                            <h2>{{users.user_name}}</h2>
+                            <h2>{{device.device_name}}</h2>
                             <ol class="breadcrumb">
                                 <li>
                                     <a href="index.html">仪表盘</a>
                                 </li>
                                 <li>
-                                    <a href= {% url 'users' %}>用户</a>
+                                    <a href= {% url 'device' %}>设备</a>
                                 </li>
                                 <li>
-                                    <strong>{{users.user_name}}</strong>
+                                    <strong>{{device.device_name}}</strong>
                                 </li>
                             </ol>
                         </div>
                         <div class="col-sm-8">
                             <div class="title-action">
-                                {% if not users.user_phone %}
-                                    <div class="col-sm-6">
-                                        <form class="application application-box websdk" id="remove_app_form" method="post" action="/dashboard/users/enrollment/">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="uKey" id="uKey" value="{{users.uKey}}">                                               
-                                            <td class="project-actions">
-                                                <button type="submit" id="remove_app" class="btn btn-info"><i class="fa fa-envelope "></i> 发送激活邮件</button>      
-                                            </td>
-                                        </form>
-                                    </div>
-                                {% endif %}
                                 <div class="col-sm-6">
-                                    <form class="application application-box websdk" id="remove_user_form" method="post" action="/dashboard/users/delete/">
+                                    <form class="application application-box websdk" id="remove_user_form" method="post" action="/dashboard/device/delete/">
                                         {% csrf_token %}
-                                        <input type="hidden" name="uKey" id="uKey" value="{{users.uKey}}">                                               
+                                        <input type="hidden" name="iKey" id="iKey" value="{{device.identifer}}">
                                         <td class="project-actions">
-                                            <button type="button" id="remove_user" class="btn btn-danger"><i class="fa fa-close "></i> 删除用户</button>
+                                            <button type="button" id="remove_user" class="btn btn-danger"><i class="fa fa-close "></i> 删除设备</button>
                                         </td>
                                     </form>
-                                </div>                                
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="wrapper wrapper-content animated fadeInUp">
-                        <div class="row row-lg detail_title">                    
+                        <div class="row row-lg detail_title">
                             <div class="col-sm-4">
                                 <h3>详细信息</h3>
                             </div>
@@ -69,7 +58,7 @@
                                     <div class="col-sm-12">
                                         <form class="form-horizontal">
                                             <div class="form-group">
-                                                <label class="col-sm-3 control-label">用户名</label>
+                                                <label class="col-sm-3 control-label">设备名</label>
                                                 <div class="col-sm-8 ">
                                                     <input type="text" class="form-control key click_to_select_all" value="{{users.user_name}}">
                                                 </div>
@@ -91,7 +80,7 @@
                                             <div class="form-group">
                                                 <label class="col-sm-3 control-label">状态
                                                 </label>
-                                                <div class="col-sm-8">                                                    
+                                                <div class="col-sm-8">
                                                     <div class="radio i-checks">
                                                         <label>
                                                             <input type="radio" checked="" value="option1" name="a"> <i></i>Active </label>
@@ -113,8 +102,8 @@
                                                 <label class="col-sm-3 control-label">用户组</label>
                                                 <div class="col-sm-8">
                                                     <select class="form-control m-b" name="account">
-                                                        <option>选项 1</option>                                                        
-                                                    </select>                                                    
+                                                        <option>选项 1</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -137,7 +126,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row row-lg detail_title">                    
+                        <div class="row row-lg detail_title">
                             <div class="col-sm-4">
                                 <h3>电话</h3>
                             </div>
@@ -153,13 +142,13 @@
                                     {% if state == 'success' %}
                                         <div class="col-sm-12 well">
                                             <h2 class="text-success text-center">删除成功</h2>
-                                        </div>                                  
+                                        </div>
                                     {% endif %}
-                                    {% if messages %}  
-                                        {% for msg in messages %}  
-                                            {{ msg.message }}  
-                                        {% endfor %}  
-                                    {% endif %}                                 
+                                    {% if messages %}
+                                        {% for msg in messages %}
+                                            {{ msg.message }}
+                                        {% endfor %}
+                                    {% endif %}
                                     <div class="col-sm-12">
                                         <table id="exampleTablePagination" data-toggle="table" data-url= ""
                                         data-method="get" data-pagination="true"
@@ -197,7 +186,7 @@
         $(document).ready(function () {
             $('#remove_user').click(function () {
                 swal({
-                    title: "您确定要删除这个用户吗",
+                    title: "您确定要删除这个设备吗",
                     text: "删除后将无法恢复，请谨慎操作！",
                     type: "warning",
                     showCancelButton: true,
@@ -207,7 +196,7 @@
                 }, function () {
                     var iKey = $("#iKey").val();
                     $("#remove_user_form").submit();
-                    swal("删除成功！", "您已经永久删除了这个用户。", "success");
+                    swal("删除成功！", "您已经永久删除了这个设备。", "success");
                 });
             });
         });

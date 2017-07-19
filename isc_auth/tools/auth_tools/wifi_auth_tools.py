@@ -7,6 +7,7 @@ from dashboard.models import Device
 import json
 import time
 from isc_auth.tools.auth_tools.timer import setTimer
+from isc_auth.tools.auth_tools.authenticate import authenticate
 
 START_TIME=10
 SCAN_TIME = 9
@@ -70,16 +71,14 @@ def wifi_data_check(api_hostname,identifer):
                 cache.set("user-%s-%s_wifi_current_seq" %(identifer, api_hostname), current_seq + 1, None)
                 check_time = (current_seq - start_seq + 2) * SCAN_TIME + start_time
 
-                filename = cache.get("device-%s-%s_current_output" %(identifer,api_hostname), None)
-                file = open(filename, "a")
                 for i in range(0, 3):
                     content = json.dumps({
                         "pc": data_pc["data"][i],
                         "mobile": data_mb["data"][i]
                     })
-                    file.write(content + "\n")
-
-                file.close()
+                    print(content)
+                    # rs = authenticate(content['pc'],content['mobile'])
+                    # print(str(i) +'------'+ str(rs))
 
                 def wifi_data_check_closure():
                     wifi_data_check(api_hostname, identifer)

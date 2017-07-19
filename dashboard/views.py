@@ -5,7 +5,7 @@ from django.template.response import TemplateResponse
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from .models import Application,Account,User,Group
+from .models import Application,Account,User,Group,Device
 from django.core import serializers
 from django.db.models import Count, Sum
 from django.core.paginator import Paginator
@@ -400,11 +400,11 @@ def device(request,args=None):
         print(args)
         state = args['state']
     content = {
-        'active_menu' : 'Users',
+        'active_menu' : 'Device',
         'user' : user,
         'state': state,
     }
-    return render(request,'dashboard/users/index.html',content)
+    return render(request,'dashboard/device/index.html',content)
 
 @login_required
 def get_device(request):
@@ -421,16 +421,16 @@ def get_device(request):
         sort_column = request.GET.get('sort')   # which column need to sort
         order = request.GET.get('order')      # ascending or descending
         if search:    #    判断是否有搜索字
-            all_records = User.objects.filter(id=search,asset_type=search,business_unit=search)
+            all_records = Device.objects.filter(id=search,asset_type=search,business_unit=search)
         else:
-            all_records = User.objects.filter(account= user)  # must be wirte the line code here
+            all_records = Device.objects.filter(account= user)  # must be wirte the line code here
 
         if sort_column:   # 判断是否有排序需求
             sort_column = sort_column.replace('asset_', '')
-            if sort_column in ['user_name','name','email','status','last_login']:   # 如果排序的列表在这些内容里面
+            if sort_column in ['name']:   # 如果排序的列表在这些内容里面
                 if order == 'desc':   # 如果排序是反向
                     sort_column = '-%s' % (sort_column)
-                all_records = User.objects.filter(account= user).order_by(sort_column)
+                all_records = Device.objects.filter(account= user).order_by(sort_column)
 
         all_records_count=all_records.count()
 
@@ -446,11 +446,10 @@ def get_device(request):
 
         for asset in pageinator.page(page):
             response_data['rows'].append({
-                "asset_user_name": '<a href="/dashboard/users/detail/?uKey=%s">%s</a>' %(asset.uKey,asset.user_name),
-                "asset_name": asset.user_real_name if asset.user_real_name else "",
-                "asset_email": asset.user_email if asset.user_email else "",
-                "asset_status": asset.user_status if asset.user_status else "",
-                "asset_last_login": asset.last_login if asset.last_login else "未激活",
+                "asset_name": '<a href="/dashboard/device/detail/?iKey=%s">%s</a>' %(asset.identifer,asset.device_name),
+                "asset_platform": asset.platform if asset.platform else "",
+                "asset_device_model": asset.device_model if asset.device_model else "",
+                "asset_user": asset.user_id if asset.user_id else "未激活",
             })
         return  HttpResponse(json.dumps(response_data))    # 需要json处理下数据格式
 
@@ -493,25 +492,24 @@ def device_detail(request):
     :return:
     '''
     user = request.user
-    uKey = request.GET.get('uKey','')
+    uKey = request.GET.get('iKey','')
     if uKey == '':
-        return HttpResponseRedirect(reverse('users'))
+        return HttpResponseRedirect(reverse('device'))
     try:
-        users = User.objects.get(uKey= uKey)
-        print(users.uKey)
+        device = Device.objects.get(identifer= uKey)
     except Application.DoesNotExist:
-        return HttpResponseRedirect(reverse('users'))
+        return HttpResponseRedirect(reverse('device'))
     content = {
-        'active_menu' : 'Users',
+        'active_menu' : 'Device',
         'user' : user,
-        'users' :users,
+        'device' : device,
     }
-    return render(request,'dashboard/users/users_detail.html',content)
+    return render(request,'dashboard/device/device_detail.html',content)
 
 @login_required
 def delete_device(request):
     user = request.user
     if request.method == 'POST':
-        uKey = request.POST.get('uKey','')
-        User.objects.filter(uKey=uKey).delete()
-    return HttpResponseRedirect(reverse('users'))
+        identifer = request.POST.get('iKey','')
+        Device.objects.filter(identifer=identifer).delete()
+    return HttpResponseRedirect(reverse('device'))
